@@ -1,0 +1,229 @@
+ <!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+
+  <title>Crime in Austin</title>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.9/esri/css/main.css">
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+  </style>
+
+  <script src="https://js.arcgis.com/4.9/"></script>
+
+  <script>
+	require([
+		"esri/Map",
+		"esri/views/MapView",
+		"esri/layers/FeatureLayer",
+		"esri/widgets/Search",
+		"esri/widgets/LayerList"
+	], 
+	function(
+		Map,
+		MapView,
+		FeatureLayer,
+		Search,
+		LayerList,		
+	) 	{
+	var crimeTemplate = { // autocasts as new PopupTemplate()
+        title: "Crime Rate in Austin, Texas",
+        content: [{
+        // It is also possible to set the fieldInfos outside of the content
+        // directly in the popupTemplate. If no fieldInfos is specifically set
+        // in the content, it defaults to whatever may be set within the popupTemplate.
+        type: "fields",
+        fieldInfos: [{
+          fieldName: "Class",
+          label: "Crime Type",
+          visible: true
+        }, {
+          fieldName: "GO_Locatio",
+          label: "Location",
+          visible: true,
+        }, {
+          fieldName: "GO_Report",
+          label: "Date",
+          visible: true,
+        }, {
+          fieldName: "GO_Distric",
+          label: "District",
+          visible: true,
+       }]
+     }]
+    };
+    	
+    var medIncomeTemplate = {	// autocasts as new PopupTemplate()
+        title: "Median Household Income in Austin, Texas",
+        content: [{
+        // It is also possible to set the fieldInfos outside of the content
+        // directly in the popupTemplate. If no fieldInfos is specifically set
+        // in the content, it defaults to whatever may be set within the popupTemplate.
+        type: "fields",
+        fieldInfos: [{
+          fieldName: "TRACTCE",
+          label: "Census Tract",
+          visible: true
+        }, {
+          fieldName: "Med15",
+          label: "Median Income",
+          visible: true,
+          format: {
+			  digitSeparator: true, 
+			  places: 0
+		  }
+        }, {
+          fieldName: "PrcNoHs15",
+          label: "% of Pop. with no High School Diploma",
+          visible: true,
+        }, {
+          fieldName: "PrcNoBach1",
+          label: "% of Pop. with no Bachelor's Degree",
+          visible: true,
+       }]
+     }]
+    };
+    	
+	var crimeLayer1 = new FeatureLayer({
+		url: "https://services9.arcgis.com/vTsniVDVFMH7FcdZ/arcgis/rest/services/2015NoHighSchool/FeatureServer/1",
+		id: "crime2015", 
+		title: "Crime Data for 2015",
+		visible: true,
+		view: view,
+		popupTemplate: crimeTemplate
+	});
+	
+	var crimeLayer2 = new FeatureLayer({ 
+		url: "https://services9.arcgis.com/vTsniVDVFMH7FcdZ/arcgis/rest/services/2015NoHighSchool/FeatureServer/0",
+		id:"crime2016",
+		title: "Crime Data for 2016",
+		visible: false,
+		view: view,  
+		popupTemplate: crimeTemplate
+	}); 
+	
+	var medIncome1 = new FeatureLayer({
+		url: "https://services9.arcgis.com/vTsniVDVFMH7FcdZ/arcgis/rest/services/2015NoHighSchool/FeatureServer/4",
+		id:"medIncome2015",
+		title: "Median Household Income for 2015",
+		visible: false,
+		view: view,  
+		popupTemplate: medIncomeTemplate
+	}); 
+	
+	var medIncome2 = new FeatureLayer({
+		url: "https://services9.arcgis.com/vTsniVDVFMH7FcdZ/arcgis/rest/services/2015NoHighSchool/FeatureServer/3",
+		id:"medIncome2016",
+		title: "Median Household Income for 2016",
+		visible: false,
+		view: view,  
+		popupTemplate: medIncomeTemplate
+	});
+	
+	var popWoHsDegree1 = new FeatureLayer({
+		url: "https://services9.arcgis.com/vTsniVDVFMH7FcdZ/arcgis/rest/services/2015NoHighSchool/FeatureServer/6",
+		id: "popWoDegree2015",
+		title: "Percent Population Over 18 Without High School Diploma 2015",
+		visible: false,
+		view: view, 
+		popupTemplate: medIncomeTemplate
+ 
+	});
+	
+	var popWoHsDegree2 = new FeatureLayer({
+		url: "https://services9.arcgis.com/vTsniVDVFMH7FcdZ/arcgis/rest/services/2015NoHighSchool/FeatureServer/5",
+		id:"popWoDegree2016",
+		title: "Percent Population Over 18 Without High School Diploma 2016",
+		visible: false,
+		view: view,  
+		popupTemplate: medIncomeTemplate
+	});
+	
+	var popWoBDegree1 = new FeatureLayer({
+		url: "https://services9.arcgis.com/vTsniVDVFMH7FcdZ/arcgis/rest/services/2015NoHighSchool/FeatureServer/8",
+		id:"popWoBDegree2015",
+		title: "Percent Population Over 18 Without Bachelor's Degree 2015",
+		visible: false,
+		view: view,  
+		popupTemplate: medIncomeTemplate		
+	});
+	
+	var popWoBDegree2 = new FeatureLayer({
+		url: "https://services9.arcgis.com/vTsniVDVFMH7FcdZ/arcgis/rest/services/2015NoHighSchool/FeatureServer/7",
+		id:"popWoBDegree2016",
+		title: "Percent Population Over 18 Without Bachelor's Degree 2016",
+		visible: false,
+		view: view,  
+		popupTemplate: medIncomeTemplate
+	});
+	
+	// Create the Map and add the featureLayer defined above
+	var map = new Map({
+		basemap: "gray",
+		layers: [medIncome1, medIncome2, popWoHsDegree1, popWoHsDegree2, popWoBDegree1, popWoBDegree2, crimeLayer1, crimeLayer2,]
+	});
+
+	// Create the MapView
+	var view = new MapView({
+		container: "viewDiv",
+		map: map,
+		center: [-97.7950, 30.2602],
+		zoom: 11
+	});  
+	
+	view.on("layerview-create", function(event) {
+          if (event.layer.id === "crime2015") {
+            // Explore the properties of the transportation layer's layer view here
+            console.log("LayerView for crime15 created!", event.layerView);
+          }
+          if (event.layer.id === "crime2016") {
+            // Explore the properties of the transportation layer's layer view here
+            console.log("LayerView for crime16 created!", event.layerView);
+          }
+    });
+    
+    var searchWidget = new Search({ 
+		view: view
+	}); 
+	
+	view.ui.add(searchWidget, {
+		position: "top-right", 
+	});
+	
+	
+	const layerList = new LayerList({
+        view: view,
+        listItemCreatedFunction: function(event) {
+          const item = event.item;
+          if (item.layer.type != "group") { // don't show legend twice
+            item.panel = {
+              content: "legend",
+              open: false,
+            };
+          }
+        }
+      });
+      view.ui.add(layerList, "bottom-right");
+
+    });
+			
+//	map.add(crimeLayer1, crimeLayer2); 
+	
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+</body>
+
+</html>
